@@ -1,0 +1,109 @@
+"use client";
+
+import { useRouter, useSearchParams } from "next/navigation";
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+}
+
+export default function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+}: PaginationProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  function goToPage(page: number) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) {
+      params.delete("page");
+    } else {
+      params.set("page", page.toString());
+    }
+    router.push(`/applications?${params.toString()}`);
+  }
+
+  if (totalPages <= 1) return null;
+
+  // Calculate which page numbers to show
+  const pageNumbers: number[] = [];
+  const maxVisible = 5;
+  let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+  const end = Math.min(totalPages, start + maxVisible - 1);
+  
+  if (end - start + 1 < maxVisible) {
+    start = Math.max(1, end - maxVisible + 1);
+  }
+
+  for (let i = start; i <= end; i++) {
+    pageNumbers.push(i);
+  }
+
+  return (
+    <div className="flex items-center justify-between mt-6 text-sm">
+      <p className="text-gray-500">
+        Showing {(currentPage - 1) * 30 + 1} - {Math.min(currentPage * 30, totalItems)} of {totalItems} applications
+      </p>
+      
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+
+        {start > 1 && (
+          <>
+            <button
+              onClick={() => goToPage(1)}
+              className="px-3 py-1 border rounded hover:bg-gray-50"
+            >
+              1
+            </button>
+            {start > 2 && <span className="px-2 text-gray-400">...</span>}
+          </>
+        )}
+
+        {pageNumbers.map((page) => (
+          <button
+            key={page}
+            onClick={() => goToPage(page)}
+            className={`px-3 py-1 border rounded ${
+              page === currentPage
+                ? "bg-blue-600 text-white border-blue-600"
+                : "hover:bg-gray-50"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {end < totalPages && (
+          <>
+            {end < totalPages - 1 && <span className="px-2 text-gray-400">...</span>}
+            <button
+              onClick={() => goToPage(totalPages)}
+              className="px-3 py-1 border rounded hover:bg-gray-50"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+
+        <button
+          onClick={() => goToPage(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
+
